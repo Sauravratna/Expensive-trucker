@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>টিউশন আয়-ব্যয় ট্র্যাকার</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Hind Siliguri', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: #64748b;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .summary-card.balance { border-top: 4px solid var(--primary-color); }
+        .summary-card.income { border-top: 4px solid var(--success-color); }
+        .summary-card.expense { border-top: 4px solid var(--danger-color); }
+
+        .summary-card h3 {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .amount {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .amount.balance-val { color: var(--primary-color); }
+        .amount.income-val { color: var(--success-color); }
+        .amount.expense-val { color: var(--danger-color); }
+
+        /* Main Content Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* Filter Controls */
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 6px 12px;
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Transactions List */
+        .list-container {
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 5px solid transparent;
+        }
+
+        .transaction-item.income { border-left-color: var(--success-color); }
+        .transaction-item.expense { border-left-color: var(--danger-color); }
+
+        .details .title {
+            font-weight: 600;
+        }
+
+        .details .sub {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .right-side {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-amount {
+            font-weight: 700;
+        }
+
+        .item-amount.income { color: var(--success-color); }
+        .item-amount.expense { color: var(--danger-color); }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: var(--danger-color);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .delete-btn:hover {
+            background: #fca5a5;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #94a3b8;
+            padding: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>টিউশন আয়-ব্যয় ট্র্যাকার</h1>
+            <p>আপনার সকল টিউশন ফি এবং খরচের হিসাব এক জায়গায় রাখুন</p>
+        </header>
+
+        <!-- Summary Section -->
+        <div class="summary-grid">
+            <div class="summary-card balance">
+                <h3>অবশিষ্ট ব্যালেন্স</h3>
+                <div class="amount balance-val">৳ <span id="totalBalance">0</span></div>
+            </div>
+            <div class="summary-card income">
+                <h3>মোট আয়</h3>
+                <div class="amount income-val">৳ <span id="totalIncome">0</span></div>
+            </div>
+            <div class="summary-card expense">
+                <h3>মোট খরচ</h3>
+                <div class="amount expense-val">৳ <span id="totalExpense">0</span></div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Add Transaction Form -->
+            <div class="card">
+                <h2>নতুন লেনদেন যোগ করুন</h2>
+                <form id="transactionForm">
+                    <div class="form-group">
+                        <label for="type">লেনদেনের ধরন</label>
+                        <select id="type" required>
+                            <option value="income">আয় (টিউশন ফি/সম্মানী)</option>
+                            <option value="expense">ব্যয় (বই/যাতায়াত/অন্যান্য)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">বিবরণ / ছাত্রের নাম</label>
+                        <input type="text" id="title" placeholder="যেমন: রহিমের বেতন বা যাতায়াত খরচ" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">টাকার পরিমাণ (৳)</label>
+                        <input type="number" id="amount" placeholder="0" min="1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">তারিখ</label>
+                        <input type="date" id="date" required>
+                    </div>
+
+                    <button type="submit" class="btn">যোগ করুন</button>
+                </form>
+            </div>
+
+            <!-- Transactions List Section -->
+            <div class="card">
+                <h2>লেনদেনের তালিকা</h2>
+                
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="setFilter('all')">সব</button>
+                    <button class="filter-btn" onclick="setFilter('income')">আয়</button>
+                    <button class="filter-btn" onclick="setFilter('expense')">ব্যয়</button>
+                </div>
+
+                <div class="list-container" id="transactionList">
+                    <!-- Dynamic List Items -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let transactions = JSON.parse(localStorage.getItem('tuition_transactions')) || [];
+        let currentFilter = 'all';
+
+        // Set default date to today
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Form Submit Event
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const type = document.getElementById('type').value;
+            const title = document.getElementById('title').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const date = document.getElementById('date').value;
+
+            const transaction = {
+                id: Date.now(),
+                type,
+                title,
+                amount,
+                date
+            };
+
+            transactions.push(transaction);
+            saveAndRender();
+
+            // Reset Form (Keep date as today)
+            document.getElementById('title').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('date').valueAsDate = new Date();
+        });
+
+        // Delete Transaction
+        function deleteTransaction(id) {
+            transactions = transactions.filter(item => item.id !== id);
+            saveAndRender();
+        }
+
+        // Set Filter
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            
+            // Update Active Class
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            renderList();
+        }
+
+        // Save to LocalStorage and Render UI
+        function saveAndRender() {
+            localStorage.setItem('tuition_transactions', JSON.stringify(transactions));
+            updateSummary();
+            renderList();
+        }
+
+        // Update Summary Cards
+        function updateSummary() {
+            const income = transactions
+                .filter(item => item.type === 'income')
+                .reduce((acc, item) => acc + item.amount, 0);
+
+            const expense = transactions
+                .filter(item => item.type === 'expense')
+                .reduce((acc, item) => acc + item.amount, 0);
+
+            const balance = income - expense;
+
+            document.getElementById('totalIncome').innerText = income.toLocaleString('bn-BD');
+            document.getElementById('totalExpense').innerText = expense.toLocaleString('bn-BD');
+            document.getElementById('totalBalance').innerText = balance.toLocaleString('bn-BD');
+        }
+
+        // Format Date to Bengali Style
+        function formatDate(dateStr) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString('bn-BD', options);
+        }
+
+        // Render List
+        function renderList() {
+            const listElement = document.getElementById('transactionList');
+            listElement.innerHTML = '';
+
+            const filteredList = transactions.filter(item => {
+                if (currentFilter === 'all') return true;
+                return item.type === currentFilter;
+            });
+
+            if (filteredList.length === 0) {
+                listElement.innerHTML = '<div class="empty-msg">কোনো লেনদেন পাওয়া যায়নি।</div>';
+                return;
+            }
+
+            // Sort by Date (Recent first)
+            filteredList.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            filteredList.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `transaction-item ${item.type}`;
+                
+                const sign = item.type === 'income' ? '+' : '-';
+
+                itemDiv.innerHTML = `
+                    <div class="details">
+                        <div class="title">${item.title}</div>
+                        <div class="sub">${formatDate(item.date)}</div>
+                    </div>
+                    <div class="right-side">
+                        <div class="item-amount ${item.type}">
+                            ${sign}৳${item.amount.toLocaleString('bn-BD')}
+                        </div>
+                        <button class="delete-btn" onclick="deleteTransaction(${item.id})">মুছুন</button>
+                    </div>
+                `;
+
+                listElement.appendChild(itemDiv);
+            });
+        }
+
+        // Initial Render
+        updateSummary();
+        renderList();
+    </script>
+</body>
+  </html>
+  
