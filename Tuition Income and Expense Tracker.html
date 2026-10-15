@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuition Income & Expense Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for transaction table */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-graduation-cap text-xl text-indigo-100"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">Tuition Tracker</h1>
+                    <p class="text-xs text-indigo-200">টিউশন আয় ও খরচ হিসাব ম্যানেজমেন্ট</p>
+                </div>
+            </div>
+            <div id="current-date-badge" class="text-xs bg-indigo-700/60 px-3 py-1.5 rounded-lg border border-indigo-500/30 text-indigo-100 hidden sm:block">
+                <!-- Dynamic Date -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto w-full px-4 py-6 flex-grow space-y-6">
+
+        <!-- 1. Dashboard / Summary Cards Section -->
+        <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Total Income Card -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div class="absolute right-0 top-0 bottom-0 w-1.5 bg-emerald-500 rounded-r-full"></div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">মোট টিউশন আয় (Total Income)</p>
+                    <h2 id="summary-income" class="text-2xl font-bold text-emerald-600 mt-1">৳ 0</h2>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+            </div>
+
+            <!-- Total Expenses Card -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div class="absolute right-0 top-0 bottom-0 w-1.5 bg-rose-500 rounded-r-full"></div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">মোট খরচ (Total Expenses)</p>
+                    <h2 id="summary-expense" class="text-2xl font-bold text-rose-600 mt-1">৳ 0</h2>
+                </div>
+                <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-arrow-trend-down"></i>
+                </div>
+            </div>
+
+            <!-- Remaining Balance Card -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div class="absolute right-0 top-0 bottom-0 w-1.5 bg-indigo-500 rounded-r-full"></div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">অবশিষ্ট টাকা (Balance)</p>
+                    <h2 id="summary-balance" class="text-2xl font-bold text-indigo-600 mt-1">৳ 0</h2>
+                </div>
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grid Layout for Form and Table control -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- 2. Add Transaction Form Card -->
+            <section class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-1 h-fit">
+                <div class="flex items-center space-x-2 mb-4 pb-2 border-b border-slate-100">
+                    <i class="fa-solid fa-circle-plus text-indigo-600"></i>
+                    <h2 class="font-semibold text-slate-800">নতুন এন্ট্রি যোগ করুন</h2>
+                </div>
+
+                <form id="transaction-form" class="space-y-4">
+                    <!-- Date Picker -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1" for="tx-date">তারিখ (Date)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
+                                <i class="fa-regular fa-calendar"></i>
+                            </span>
+                            <input type="date" id="tx-date" required 
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <!-- Category Selection -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1" for="tx-type">ধরণ (Category)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-tags"></i>
+                            </span>
+                            <select id="tx-type" required 
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition appearance-none cursor-pointer">
+                                <option value="Income">Tuition Income (টিউশন ফি আয়)</option>
+                                <option value="Expense">Expense (অন্যান্য খরচ)</option>
+                            </select>
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Student Name / Purpose -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1" for="tx-note">ছাত্রের নাম বা বিববরণ (Purpose)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-pen"></i>
+                            </span>
+                            <input type="text" id="tx-note" placeholder="যেমন: Rahat's Tuition Fee / Book Purchase" required 
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1" for="tx-amount">টাকার পরিমাণ (Amount)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-bangladeshi-taka-sign"></i>
+                            </span>
+                            <input type="number" id="tx-amount" min="1" step="any" placeholder="0.00" required 
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-medium py-3 px-4 rounded-xl shadow-md shadow-indigo-200 transition duration-150 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Add Transaction</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- 3. Transaction History Section -->
+            <section class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2 flex flex-col justify-between">
+                <div>
+                    <!-- Header with Filter / Search -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-2 border-b border-slate-100 gap-2">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
+                            <h2 class="font-semibold text-slate-800">লেনদেনের ইতিহাস (History)</h2>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <select id="filter-type" onchange="renderApp()" 
+                                class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                                <option value="All">সব দেখুন (All)</option>
+                                <option value="Income">শুধু আয় (Income)</option>
+                                <option value="Expense">শুধু খরচ (Expense)</option>
+                            </select>
+                            <button onclick="clearAllData()" title="সব ডাটা মুছুন" 
+                                class="text-xs text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition border border-rose-100">
+                                <i class="fa-solid fa-trash-can mr-1"></i> রিসেট
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table Wrapper -->
+                    <div class="overflow-x-auto min-h-[250px] max-h-[400px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="sticky top-0 bg-slate-100 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
+                                <tr>
+                                    <th class="py-3 px-3 rounded-l-lg">তারিখ</th>
+                                    <th class="py-3 px-3">বিবরণ (Note)</th>
+                                    <th class="py-3 px-3">ধরণ</th>
+                                    <th class="py-3 px-3 text-right">পরিমাণ</th>
+                                    <th class="py-3 px-3 rounded-r-lg text-center">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-list" class="divide-y divide-slate-100 text-sm">
+                                <!-- Dynamic rows inserted via JS -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- Empty State message -->
+                        <div id="empty-state" class="hidden flex-col items-center justify-center py-12 text-slate-400">
+                            <i class="fa-solid fa-receipt text-4xl mb-2 text-slate-300"></i>
+                            <p class="text-sm">কোনো লেনদেন পাওয়া যায়নি!</p>
+                            <p class="text-xs text-slate-400 mt-0.5">নতুন টিউশন ফি বা খরচ এন্ট্রি করুন।</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Summary Info -->
+                <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <span id="total-entries-count">মোট এন্ট্রি: ০ টি</span>
+                    <span class="text-slate-400">ডাটা ব্রাউজারে স্বয়ংক্রিয়ভাবে সংরক্ষিত (LocalStorage)</span>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Custom Modal for Notifications / Alerts (Replacing alert()) -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl transform transition-all text-center">
+            <div id="modal-icon" class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="modal-title" class="text-base font-bold text-slate-800 mb-1">সফল হয়েছে</h3>
+            <p id="modal-message" class="text-xs text-slate-500 mb-5">লেনদেনটি সফলভাবে যোগ করা হয়েছে।</p>
+            <button onclick="closeModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition">
+                ঠিক আছে (OK)
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-400 border-t border-slate-200 mt-8">
+        Tuition Income & Expense Tracker &copy; 2026 | Mobile Friendly Web App
+    </footer>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // Set today's date as default in date picker on load
+        document.getElementById('tx-date').valueAsDate = new Date();
+
+        // Display current date in header badge
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date-badge').innerText = new Date().toLocaleDateString('bn-BD', options);
+
+        // Fetch transactions from localStorage or initialize empty array
+        let transactions = JSON.parse(localStorage.getItem('tuition_transactions')) || [];
+
+        // DOM Elements
+        const form = document.getElementById('transaction-form');
+        const transactionListEl = document.getElementById('transaction-list');
+        const summaryIncomeEl = document.getElementById('summary-income');
+        const summaryExpenseEl = document.getElementById('summary-expense');
+        const summaryBalanceEl = document.getElementById('summary-balance');
+        const emptyStateEl = document.getElementById('empty-state');
+        const totalEntriesCountEl = document.getElementById('total-entries-count');
+        const filterTypeEl = document.getElementById('filter-type');
+
+        // Form Submission Event Listener
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('tx-date').value;
+            const type = document.getElementById('tx-type').value;
+            const note = document.getElementById('tx-note').value.trim();
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+
+            if (!date || !note || isNaN(amount) || amount <= 0) {
+                showModal('সতর্কতা', 'দয়া করে সঠিক তথ্য পূরণ করুন।', 'warning');
+                return;
+            }
+
+            const newTransaction = {
+                id: Date.now().toString(),
+                date,
+                type,
+                note,
+                amount
+            };
+
+            transactions.push(newTransaction);
+            saveAndRefresh();
+            form.reset();
+            document.getElementById('tx-date').valueAsDate = new Date(); // Reset date back to today
+            showModal('সফল', 'লেনদেন সফলভাবে সংরক্ষণ করা হয়েছে।', 'success');
+        });
+
+        // Save data to localStorage and re-render app components
+        function saveAndRefresh() {
+            localStorage.setItem('tuition_transactions', JSON.stringify(transactions));
+            renderApp();
+        }
+
+        // Delete individual transaction
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveAndRefresh();
+        }
+
+        // Clear all data with confirmation check via custom modal logic
+        function clearAllData() {
+            if (transactions.length === 0) {
+                showModal('তথ্য', 'ইতিমধ্যেই তালিকা খালি রয়েছে।', 'info');
+                return;
+            }
+            if (confirm('আপনি কি নিশ্চিতভাবে সব লেনদেনের তথ্য মুছে ফেলতে চান?')) {
+                transactions = [];
+                saveAndRefresh();
+                showModal('রিসেট', 'সকল ডাটা সফলভাবে মুছে ফেলা হয়েছে।', 'success');
+            }
+        }
+
+        // Render Dashboard & Table list
+        function renderApp() {
+            // Sort transactions by date descending (latest first)
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const filterValue = filterTypeEl.value;
+            const filteredTransactions = sortedTransactions.filter(t => {
+                if (filterValue === 'All') return true;
+                return t.type === filterValue;
+            });
+
+            // Calculate Totals based on entire dataset
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            transactions.forEach(t => {
+                if (t.type === 'Income') {
+                    totalIncome += t.amount;
+                } else if (t.type === 'Expense') {
+                    totalExpense += t.amount;
+                }
+            });
+
+            const balance = totalIncome - totalExpense;
+
+            // Update Summary UI with Bengali Taka format
+            summaryIncomeEl.innerText = `৳ ${totalIncome.toLocaleString('en-IN')}`;
+            summaryExpenseEl.innerText = `৳ ${totalExpense.toLocaleString('en-IN')}`;
+            summaryBalanceEl.innerText = `৳ ${balance.toLocaleString('en-IN')}`;
+            
+            if (balance < 0) {
+                summaryBalanceEl.className = "text-2xl font-bold text-rose-600 mt-1";
+            } else {
+                summaryBalanceEl.className = "text-2xl font-bold text-indigo-600 mt-1";
+            }
+
+            // Render Table Rows
+            transactionListEl.innerHTML = '';
+            
+            if (filteredTransactions.length === 0) {
+                emptyStateEl.classList.remove('hidden');
+                emptyStateEl.classList.add('flex');
+            } else {
+                emptyStateEl.classList.remove('flex');
+                emptyStateEl.classList.add('hidden');
+
+                filteredTransactions.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/80 transition border-b border-slate-50 last:border-none";
+                    
+                    const isIncome = t.type === 'Income';
+                    const badgeClass = isIncome 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' 
+                        : 'bg-rose-50 text-rose-700 border border-rose-200/60';
+                    const typeLabel = isIncome ? 'টিউশন আয়' : 'খরচ';
+                    const amountSign = isIncome ? '+' : '-';
+                    const amountColor = isIncome ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold';
+
+                    // Format date nicely
+                    const formattedDate = new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-3 text-slate-500 whitespace-nowrap text-xs">${formattedDate}</td>
+                        <td class="py-3 px-3 font-medium text-slate-800">${escapeHtml(t.note)}</td>
+                        <td class="py-3 px-3 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${badgeClass}">
+                                ${typeLabel}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-right whitespace-nowrap ${amountColor}">${amountSign} ৳ ${t.amount.toLocaleString('en-IN')}</td>
+                        <td class="py-3 px-3 text-center whitespace-nowrap">
+                            <button onclick="deleteTransaction('${t.id}')" title="ডিলিট করুন" 
+                                class="w-7 h-7 bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-600 rounded-lg inline-flex items-center justify-center transition">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </td>
+                    `;
+                    transactionListEl.appendChild(tr);
+                });
+            }
+
+            totalEntriesCountEl.innerText = `মোট এন্ট্রি: ${transactions.length} টি`;
+        }
+
+        // Custom Modal handling (replaces browser standard alert)
+        function showModal(title, message, type = 'success') {
+            const modal = document.getElementById('custom-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalIcon = document.getElementById('modal-icon');
+
+            modalTitle.innerText = title;
+            modalMessage.innerText = message;
+
+            if (type === 'success') {
+                modalIcon.className = "w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3 text-xl";
+                modalIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else if (type === 'warning') {
+                modalIcon.className = "w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3 text-xl";
+                modalIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                modalIcon.className = "w-12 h-12 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-3 text-xl";
+                modalIcon.innerHTML = '<i class="fa-solid fa-info"></i>';
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        // Utility to prevent XSS injection in notes
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // Initial App Render on Load
+        renderApp();
+    </script>
+</body>
+</html>
